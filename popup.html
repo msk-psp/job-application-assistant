@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Application Form Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="popup">
+    <header class="popup-header">
+      <div>
+        <h1>Application Assistant</h1>
+        <p id="site-label">Checking current page...</p>
+      </div>
+      <button id="settings" class="icon-button" title="Edit resume profile" aria-label="Edit resume profile">&#9881;</button>
+    </header>
+
+    <main>
+      <div id="profile-warning" class="notice" hidden>
+        Add your resume profile before scanning an application.
+      </div>
+
+      <div class="toolbar">
+        <button id="scan" class="primary">Scan form</button>
+        <button id="fill" disabled>Fill selected</button>
+      </div>
+
+      <p id="status" class="status" aria-live="polite"></p>
+      <section id="suggestions" class="suggestions" aria-label="Suggested form values"></section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

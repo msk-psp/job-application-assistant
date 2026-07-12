@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Application Form Assistant",
+  "version": "0.1.0",
+  "description": "Review and fill job application forms from a locally stored resume profile.",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Application Form Assistant"
+  },
+  "options_page": "options.html"
+}

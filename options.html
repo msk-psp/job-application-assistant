@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resume Profile</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="options">
+    <header class="page-header">
+      <h1>Resume Profile</h1>
+      <p>Stored only in this Chrome profile. Review all suggestions before filling.</p>
+    </header>
+
+    <main class="profile-form">
+      <section>
+        <h2>Contact</h2>
+        <div class="field-grid">
+          <label>Full name<input id="fullName" autocomplete="name"></label>
+          <label>Email<input id="email" type="email" autocomplete="email"></label>
+          <label>Phone<input id="phone" autocomplete="tel"></label>
+          <label>Location<input id="location" autocomplete="address-level1"></label>
+          <label>LinkedIn URL<input id="linkedin" type="url"></label>
+          <label>Portfolio URL<input id="portfolio" type="url"></label>
+          <label>GitHub URL<input id="github" type="url"></label>
+        </div>
+      </section>
+
+      <section>
+        <h2>Career</h2>
+        <div class="field-grid">
+          <label>Current company<input id="currentCompany"></label>
+          <label>Current title<input id="currentTitle"></label>
+          <label>Years of experience<input id="yearsExperience" type="number" min="0" step="0.5"></label>
+          <label>Expected salary<input id="expectedSalary"></label>
+          <label>Available start date<input id="availableDate" type="date"></label>
+        </div>
+        <label>Skills<textarea id="skills" rows="3" placeholder="Python, Kubernetes, MLflow, Ray"></textarea></label>
+        <label>Career summary<textarea id="summary" rows="7"></textarea></label>
+      </section>
+
+      <section>
+        <h2>Reusable Answers</h2>
+        <label>Why are you looking for a new role?<textarea id="motivation" rows="5"></textarea></label>
+        <label>Preferred working culture<textarea id="culture" rows="5"></textarea></label>
+        <label>Strengths<textarea id="strengths" rows="5"></textarea></label>
+        <label>Collaboration style<textarea id="collaboration" rows="5"></textarea></label>
+      </section>
+
+      <footer class="save-bar">
+        <span id="save-status" aria-live="polite"></span>
+        <button id="save" class="primary">Save profile</button>
+      </footer>
+    </main>
+
+    <script src="options.js"></script>
+  </body>
+</html>
