@@ -13,6 +13,32 @@
     </header>
 
     <main class="profile-form">
+      <section class="import-section">
+        <h2>PDF 이력서 가져오기</h2>
+        <p class="section-description">파일은 이 브라우저 안에서만 처리되며 원본 PDF는 저장하지 않습니다.</p>
+        <div class="import-controls">
+          <label class="file-picker">PDF 파일
+            <input id="resume-file" type="file" accept="application/pdf,.pdf">
+          </label>
+          <button id="extract-resume" type="button">내용 추출</button>
+        </div>
+        <p id="import-status" class="status" aria-live="polite"></p>
+        <div id="import-preview" class="import-preview" hidden>
+          <div class="preview-header">
+            <div>
+              <h3>가져올 내용 검토</h3>
+              <p>체크한 항목만 프로필 입력란에 반영됩니다.</p>
+            </div>
+            <button id="merge-resume" type="button" class="primary">선택 항목 반영</button>
+          </div>
+          <div id="import-fields" class="import-fields"></div>
+          <details>
+            <summary>추출된 전체 텍스트 확인</summary>
+            <textarea id="raw-resume-text" rows="12" readonly></textarea>
+          </details>
+        </div>
+      </section>
+
       <section>
         <h2>Contact</h2>
         <div class="field-grid">
@@ -53,6 +79,6 @@
       </footer>
     </main>
 
-    <script src="options.js"></script>
+    <script type="module" src="options.js"></script>
   </body>
 </html>
