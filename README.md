@@ -1,32 +1,61 @@
-# Application Form Assistant
+# 입사 지원서 작성 도우미
 
-A local-first Chrome extension that reviews and fills job application forms from
-a reusable resume profile. It recognizes common Korean and English labels and
-identifies Saramin, Wanted, Remember, LinkedIn, and generic application pages.
+이력서 프로필을 바탕으로 채용 지원서의 입력 항목을 찾아 값을 제안하고
+채워 주는 로컬 우선 Chrome 확장 프로그램입니다. 한국어와 영어로 작성된
+일반적인 항목명을 인식하며 사람인, 원티드, 리멤버, LinkedIn 및 일반 채용
+페이지를 식별할 수 있습니다.
 
-The extension does not submit applications, upload files, collect passwords, or
-send resume data to a server. Page access is granted temporarily when the user
-opens the extension; it does not run across browsing activity in the background.
+확장 프로그램은 지원서를 자동으로 제출하거나 파일을 업로드하지 않습니다.
+비밀번호를 수집하지 않으며 이력서 데이터를 외부 서버로 전송하지 않습니다.
+사용자가 확장 프로그램을 연 경우에만 현재 페이지에 일시적으로 접근하고,
+백그라운드에서 사용자의 웹 탐색 활동을 추적하지 않습니다.
 
-## Install for development
+## 주요 기능
 
-1. Open `chrome://extensions`.
-2. Enable **Developer mode**.
-3. Select **Load unpacked**.
-4. Choose this repository directory.
-5. Open the extension settings and save a resume profile.
-6. Visit an application form, open the extension, and select **Scan form**.
+- 이력서 프로필을 `chrome.storage.local`에 로컬 저장
+- 한국어 및 영어 지원서 항목명 매칭
+- 사람인, 원티드, 리멤버, LinkedIn 및 일반 채용 페이지 식별
+- 입력 전 제안 내용 검토 및 항목별 선택
+- React 기반 제어 입력 필드와 호환되는 이벤트 처리
+- 사용자의 확인 없는 자동 제출 방지
 
-Chrome does not allow content scripts on browser-internal pages or pages opened
-before an extension was installed. Reload the application page when necessary.
+## 개발 버전 설치
 
-## Current scope
+1. Chrome 주소창에서 `chrome://extensions`를 엽니다.
+2. 오른쪽 위의 **개발자 모드**를 활성화합니다.
+3. **압축해제된 확장 프로그램을 로드합니다**를 선택합니다.
+4. 이 저장소의 디렉터리를 선택합니다.
+5. 확장 프로그램 설정에서 이력서 프로필을 작성하고 저장합니다.
+6. 채용 지원 페이지에서 확장 프로그램을 연 뒤 **Scan form**을 선택합니다.
+7. 제안된 값을 검토하고 필요한 항목만 선택한 뒤 **Fill selected**를 누릅니다.
+8. 실제 제출 전 페이지에 입력된 내용을 직접 확인합니다.
 
-- Resume profile stored in `chrome.storage.local`
-- Korean and English field-label matching
-- Review and selection before filling
-- Input events compatible with React-style controlled fields
-- No automatic submission
+Chrome 내부 페이지에서는 콘텐츠 스크립트를 실행할 수 없습니다. 확장 프로그램을
+설치하기 전에 열어 둔 채용 페이지에서는 접근이 실패할 수 있으므로 해당 페이지를
+새로고침한 뒤 다시 시도합니다.
 
-Platform-specific resume import and question drafting are planned after the
-generic form workflow is validated against real application pages.
+## 개인정보 처리 원칙
+
+- 이력서 프로필은 현재 Chrome 프로필 내부에만 저장됩니다.
+- 현재 버전에는 외부 API 호출이나 분석 수집 기능이 없습니다.
+- 확장 프로그램 버튼을 누른 현재 탭에만 `activeTab` 권한을 사용합니다.
+- 저장소에 실제 이력서, 연락처 또는 지원 답변을 커밋하지 않습니다.
+
+공용 또는 다른 사람이 사용하는 컴퓨터에서는 민감한 프로필을 저장하지 마십시오.
+Chrome 동기화 및 운영체제 계정의 보안 설정도 사용자가 직접 관리해야 합니다.
+
+## 현재 지원 범위
+
+현재 버전은 사용자가 확장 프로그램 설정에 직접 저장한 프로필과 일반적인 폼
+항목 매칭을 사용합니다. 각 채용 플랫폼의 이력서 페이지에서 정보를 자동으로
+가져오는 기능과 회사별 서술형 질문 답변 초안 생성 기능은 아직 포함하지 않습니다.
+
+실제 지원 페이지에서 공통 입력 흐름을 검증한 뒤 플랫폼별 이력서 가져오기,
+필드 어댑터, 서술형 질문 검토 기능을 단계적으로 추가할 예정입니다.
+
+## 개발 원칙
+
+- 지원서 자동 제출 기능은 추가하지 않습니다.
+- 사용자가 검토하지 않은 서술형 답변을 입력하지 않습니다.
+- 플랫폼의 비공개 API나 인증 정보를 우회하여 사용하지 않습니다.
+- 사이트 구조가 변경되면 플랫폼별 필드 매칭을 명시적으로 업데이트합니다.
