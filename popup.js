@@ -1,5 +1,10 @@
 import { extractPdfResume, validatePdfFile } from "./pdf-import.js";
-import { hasProfileData, PROFILE_KEY, profileFromResume } from "./profile-model.js";
+import {
+  hasProfileData,
+  PROFILE_KEY,
+  profileFromResume,
+  summarizeResumeImport
+} from "./profile-model.js";
 
 let currentProfile = null;
 let currentSuggestions = [];
@@ -16,7 +21,7 @@ async function sendToPage(message) {
   } catch (error) {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ["matching-core.js", "platform-adapters.js", "content.js"]
+      files: ["matching-core.js", "platform-adapters.js", "form-scanner.js", "content.js"]
     });
     return chrome.tabs.sendMessage(tab.id, message);
   }
@@ -32,6 +37,7 @@ function renderSuggestions(suggestions) {
     checkbox.type = "checkbox";
     checkbox.checked = suggestion.confidence !== "low";
     checkbox.dataset.index = String(index);
+    checkbox.addEventListener("change", syncHighlights);
     const detail = document.createElement("span");
     const title = document.createElement("strong");
     title.textContent = suggestion.label;
@@ -46,6 +52,20 @@ function renderSuggestions(suggestions) {
   }
 }
 
+function selectedSuggestions() {
+  return Array.from(document.querySelectorAll(".suggestion input:checked"))
+    .map((checkbox) => currentSuggestions[Number(checkbox.dataset.index)]);
+}
+
+async function syncHighlights() {
+  const fieldIds = selectedSuggestions().map((suggestion) => suggestion.fieldId);
+  try {
+    await sendToPage({ type: "HIGHLIGHT_FIELDS", fieldIds });
+  } catch (error) {
+    // The popup status already reports pages that cannot be inspected.
+  }
+}
+
 async function scanForm() {
   const status = document.getElementById("status");
   if (!hasProfileData(currentProfile)) return;
@@ -54,9 +74,14 @@ async function scanForm() {
     const response = await sendToPage({ type: "SCAN_FORM", profile: currentProfile });
     currentSuggestions = response.suggestions;
     renderSuggestions(currentSuggestions);
+    await syncHighlights();
     document.getElementById("fill").disabled = currentSuggestions.length === 0;
+    const manualFiles = response.manualActions?.map((action) => action.label).join(", ");
+    const manualNotice = manualFiles
+      ? ` ${manualFiles} 파일은 브라우저 보안상 페이지에서 직접 선택해야 합니다.`
+      : "";
     status.textContent = currentSuggestions.length
-      ? `${currentSuggestions.length}개 항목을 찾았습니다. 내용을 확인한 뒤 입력하세요.`
+      ? `${currentSuggestions.length}개 자동 입력 항목을 찾았습니다.${manualNotice} 내용을 확인한 뒤 입력하세요.`
       : "입력할 항목을 찾지 못했습니다. 테스트 폼에서 먼저 확인할 수 있습니다.";
   } catch (error) {
     status.textContent = "이 페이지에는 접근할 수 없습니다. 페이지를 새로고침하거나 테스트 폼을 사용하세요.";
@@ -77,12 +102,15 @@ async function quickImport() {
   status.textContent = "PDF 이력서에서 프로필을 만들고 있습니다...";
   try {
     const result = await extractPdfResume(file);
+    const importSummary = summarizeResumeImport(result);
     currentProfile = profileFromResume(result, currentProfile || {});
     await chrome.storage.local.set({ [PROFILE_KEY]: currentProfile });
     document.getElementById("onboarding").hidden = true;
     document.getElementById("ready").hidden = false;
     status.textContent = "프로필을 만들었습니다. 현재 페이지를 확인합니다.";
     await scanForm();
+    const pageStatus = status.textContent;
+    status.textContent = `이력서에서 기본 항목 ${importSummary.fields}개, 경력 ${importSummary.experiences}개, 프로젝트 ${importSummary.projects}개, 학력 ${importSummary.education}개, 기술 ${importSummary.skills}개를 저장했습니다. ${pageStatus}`;
   } catch (error) {
     console.error(error);
     status.textContent = error?.name === "PasswordException"
@@ -94,8 +122,7 @@ async function quickImport() {
 }
 
 async function fillSelected() {
-  const selected = Array.from(document.querySelectorAll(".suggestion input:checked"))
-    .map((checkbox) => currentSuggestions[Number(checkbox.dataset.index)]);
+  const selected = selectedSuggestions();
   if (!selected.length) {
     document.getElementById("status").textContent = "입력할 항목을 하나 이상 선택하세요.";
     return;

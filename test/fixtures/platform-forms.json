@@ -1,4 +1,7 @@
 [
+  { "host": "www.futureschole.com", "label": "basicInformation.name", "expectedKey": "fullName", "platform": "greeting" },
+  { "host": "www.futureschole.com", "label": "이메일주소 * 이메일 확인", "expectedKey": "email", "platform": "greeting" },
+  { "host": "www.futureschole.com", "label": "basicInformation.phoneNumber.nationalNumber", "expectedKey": "phone", "platform": "greeting" },
   { "host": "apply.saramin.co.kr", "label": "현재 직장명", "expectedKey": "currentCompany", "platform": "saramin" },
   { "host": "www.wanted.co.kr", "label": "포트폴리오 관련 링크", "expectedKey": "portfolio", "platform": "wanted" },
   { "host": "career.rememberapp.co.kr", "label": "현재 포지션", "expectedKey": "currentTitle", "platform": "remember" },

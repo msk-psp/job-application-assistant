@@ -7,13 +7,18 @@ test("creates a versioned profile from an imported resume", () => {
   const profile = profileFromResume({
     fields: { fullName: "김민수", email: "minsoo@example.com" },
     experiences: [{ company: "Example Corp", current: true }],
-    projects: [{ name: "MLOps Platform" }]
+    projects: [{ name: "MLOps Platform" }],
+    education: [{ school: "Example University" }],
+    rawText: "김민수 전체 이력서 텍스트",
+    metadata: { characterCount: 14, skillCount: 2 }
   });
 
   assert.equal(profile.profileVersion, 2);
   assert.equal(profile.fullName, "김민수");
   assert.equal(profile.experiences.length, 1);
   assert.equal(profile.projects.length, 1);
+  assert.equal(profile.education.length, 1);
+  assert.equal(profile.resumeText, "김민수 전체 이력서 텍스트");
   assert.deepEqual(profile.answers, []);
   assert.equal(hasProfileData(profile), true);
 });

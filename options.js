@@ -10,6 +10,7 @@ const fields = [
 const importLabels = {
   fullName: "이름", email: "이메일", phone: "전화번호", location: "거주지",
   linkedin: "LinkedIn", portfolio: "포트폴리오", github: "GitHub",
+  currentCompany: "현재 회사", currentTitle: "현재 직책",
   skills: "기술", summary: "경력 요약"
 };
 const legacyAnswers = {
@@ -19,6 +20,7 @@ const legacyAnswers = {
   collaboration: "협업 방식 또는 갈등 해결"
 };
 let pendingImport = null;
+let loadedProfile = {};
 
 function createInput(labelText, field, value = "", options = {}) {
   const label = document.createElement("label");
@@ -138,6 +140,7 @@ function migrateAnswers(profile) {
 async function loadProfile() {
   const stored = await chrome.storage.local.get(PROFILE_KEY);
   const profile = stored[PROFILE_KEY] || {};
+  loadedProfile = profile;
   for (const field of fields) document.getElementById(field).value = profile[field] || "";
   const experiences = Array.isArray(profile.experiences) && profile.experiences.length
     ? profile.experiences
@@ -150,7 +153,10 @@ async function loadProfile() {
 }
 
 async function saveProfile() {
-  const profile = Object.fromEntries(fields.map((field) => [field, document.getElementById(field).value.trim()]));
+  const profile = {
+    ...loadedProfile,
+    ...Object.fromEntries(fields.map((field) => [field, document.getElementById(field).value.trim()]))
+  };
   Object.assign(profile, {
     profileVersion: 2,
     experiences: collectItems("experience"),
@@ -158,6 +164,7 @@ async function saveProfile() {
     answers: collectItems("answer")
   });
   await chrome.storage.local.set({ [PROFILE_KEY]: profile });
+  loadedProfile = profile;
   const status = document.getElementById("save-status");
   status.textContent = "로컬에 저장했습니다";
   window.setTimeout(() => { status.textContent = ""; }, 1800);
@@ -199,6 +206,11 @@ function renderImportPreview(result) {
     [item.name, item.role, item.period, item.description].filter(Boolean).join("\n"),
     { importCollection: "projects", importIndex: String(index) }
   )));
+  result.education.forEach((item, index) => container.append(importRow(
+    `학력 후보 ${index + 1}`,
+    [item.school, item.degree, item.major, item.period, item.description].filter(Boolean).join("\n"),
+    { importCollection: "education", importIndex: String(index) }
+  )));
   document.getElementById("raw-resume-text").value = result.rawText;
   document.getElementById("import-preview").hidden = false;
 }
@@ -220,7 +232,10 @@ async function importResume() {
   try {
     const result = await extractPdfResume(file);
     renderImportPreview(result);
-    const count = Object.keys(result.fields).length + result.experiences.length + result.projects.length;
+    const count = Object.keys(result.fields).length
+      + result.experiences.length
+      + result.projects.length
+      + result.education.length;
     status.textContent = `${file.name}에서 ${count}개 항목을 찾았습니다.`;
   } catch (error) {
     console.error(error);
@@ -241,8 +256,16 @@ function mergeResume() {
   const selectedCollections = document.querySelectorAll("[data-import-collection]:checked");
   for (const checkbox of selectedCollections) {
     const item = pendingImport[checkbox.dataset.importCollection][Number(checkbox.dataset.importIndex)];
-    checkbox.dataset.importCollection === "experiences" ? addExperience(item) : addProject(item);
+    if (checkbox.dataset.importCollection === "experiences") {
+      addExperience(item);
+    } else if (checkbox.dataset.importCollection === "projects") {
+      addProject(item);
+    } else {
+      loadedProfile.education = [...(loadedProfile.education || []), item];
+    }
   }
+  loadedProfile.resumeText = pendingImport.rawText;
+  loadedProfile.importMetadata = pendingImport.metadata;
   const count = selectedFields.length + selectedCollections.length;
   document.getElementById("import-status").textContent = `${count}개 항목을 반영했습니다. 내용을 확인한 뒤 저장하세요.`;
 }

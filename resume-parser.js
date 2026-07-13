@@ -30,14 +30,17 @@ function findUrl(urls, host) {
 }
 
 const SECTION_HEADINGS = {
-  experience: /^(경력|경력사항|주요 경력|work experience|experience|employment)$/i,
-  projects: /^(프로젝트|주요 프로젝트|projects?|project experience)$/i
+  experience: /^(경력|경력\s*사항|주요\s*경력|업무\s*경력|work\s*experience|professional\s*experience|experience|employment)$/i,
+  projects: /^(프로젝트|주요\s*프로젝트|projects?|project\s*experience|selected\s*projects)$/i,
+  education: /^(학력|학력\s*사항|교육|education|academic\s*background)$/i,
+  skills: /^(기술|기술\s*스택|보유\s*기술|핵심\s*역량|skills?|tech(?:nical)?\s*stack|technologies|competencies)$/i,
+  other: /^(자격증|수상|어학|외부\s*활동|certifications?|awards?|languages?|activities|summary|profile|자기소개)$/i
 };
 
 const DATE_RANGE = /(20\d{2})[.\-/년\s]+(0?[1-9]|1[0-2])?\s*(?:~|–|—|-)\s*(?:(20\d{2})[.\-/년\s]+(0?[1-9]|1[0-2])?|현재|재직중|present)/i;
 
 function sectionsFrom(lines) {
-  const sections = { experience: [], projects: [] };
+  const sections = { experience: [], projects: [], education: [], skills: [], other: [] };
   let current = "";
   for (const line of lines) {
     const heading = Object.entries(SECTION_HEADINGS).find(([, pattern]) => pattern.test(line));
@@ -48,6 +51,36 @@ function sectionsFrom(lines) {
     if (current) sections[current].push(line);
   }
   return sections;
+}
+
+function sectionSkills(lines) {
+  const candidates = [];
+  for (const line of lines) {
+    const cleaned = line.replace(/^(기술|skills?|tech(?:nical)? stack)\s*[:：]\s*/i, "");
+    const hasDelimiter = /[,|·•]/.test(cleaned);
+    const parts = hasDelimiter
+      ? cleaned.split(/[,|·•]/)
+      : /^[A-Za-z0-9+#.\-/ ]+$/.test(cleaned) && cleaned.split(/\s+/).length <= 12
+        ? cleaned.split(/\s+/)
+        : [cleaned];
+    for (const part of parts) {
+      const value = part.trim().replace(/^[-–—]\s*/, "");
+      if (value && value.length <= 40 && value.split(/\s+/).length <= 4 && !DATE_RANGE.test(value)) {
+        candidates.push(value);
+      }
+    }
+  }
+  return candidates;
+}
+
+function uniqueValues(values) {
+  const seen = new Set();
+  return values.filter((value) => {
+    const key = value.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function monthValue(year, month) {
@@ -78,7 +111,7 @@ function datedEntries(lines, kind) {
         description,
         achievements: ""
       });
-    } else {
+    } else if (kind === "projects") {
       entries.push({
         name: parts[0] || identity || `프로젝트 ${entries.length + 1}`,
         role: parts[1] || "",
@@ -86,6 +119,16 @@ function datedEntries(lines, kind) {
         technologies: "",
         description,
         outcomes: ""
+      });
+    } else {
+      entries.push({
+        school: parts[0] || identity,
+        degree: parts[1] || "",
+        major: "",
+        startDate: monthValue(range[1], range[2]),
+        endDate: current ? "" : monthValue(range[3], range[4]),
+        period,
+        description
       });
     }
   }
@@ -108,6 +151,10 @@ export function extractResumeFields(rawText) {
     return new RegExp(`(^|[^A-Za-z0-9+#.])${escaped}([^A-Za-z0-9+#.]|$)`, "i").test(compactText);
   });
   const sections = sectionsFrom(lines);
+  const extractedSkills = uniqueValues([...matchedSkills, ...sectionSkills(sections.skills)]);
+  const experiences = datedEntries(sections.experience, "experience");
+  const projects = datedEntries(sections.projects, "projects");
+  const education = datedEntries(sections.education, "education");
   const fields = {
     fullName: findName(lines),
     email,
@@ -116,13 +163,21 @@ export function extractResumeFields(rawText) {
     linkedin: findUrl(urls, "linkedin.com"),
     github: findUrl(urls, "github.com"),
     portfolio: urls.find((url) => !/linkedin\.com|github\.com/i.test(url)) || "",
-    skills: matchedSkills.join(", "),
+    currentCompany: experiences[0]?.company || "",
+    currentTitle: experiences[0]?.title || "",
+    skills: extractedSkills.join(", "),
     summary: lines.slice(0, 40).join("\n").slice(0, 3000)
   };
   return {
     fields: Object.fromEntries(Object.entries(fields).filter(([, value]) => value)),
-    experiences: datedEntries(sections.experience, "experience"),
-    projects: datedEntries(sections.projects, "projects"),
-    rawText: lines.join("\n")
+    experiences,
+    projects,
+    education,
+    rawText: lines.join("\n"),
+    metadata: {
+      characterCount: compactText.length,
+      lineCount: lines.length,
+      skillCount: extractedSkills.length
+    }
   };
 }

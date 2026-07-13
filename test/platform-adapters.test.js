@@ -16,7 +16,9 @@ test("platform fixtures select the expected adapter and profile field", () => {
   const context = contextWithScripts();
   const fixtures = JSON.parse(readFileSync(new URL("./fixtures/platform-forms.json", import.meta.url)));
   const profile = {
+    fullName: "테스트 지원자",
     email: "applicant@example.com",
+    phone: "010-1234-5678",
     portfolio: "https://example.com",
     experiences: [{
       company: "Example Corp",
@@ -33,4 +35,13 @@ test("platform fixtures select the expected adapter and profile field", () => {
     assert.equal(match?.key, fixture.expectedKey, fixture.label);
     if (fixture.platform !== "generic") assert.equal(match?.source, "platform");
   }
+});
+
+test("Greeting semantic markers detect custom career domains", () => {
+  const context = contextWithScripts();
+  const adapter = context.JobAssistantAdapters.forPage("careers.example.com", {
+    greeting: true
+  });
+
+  assert.equal(adapter.id, "greeting");
 });

@@ -1,6 +1,21 @@
 (() => {
   const adapters = [
     {
+      id: "greeting",
+      name: "Greeting 지원서",
+      hosts: ["futureschole.com", "greetinghr.com"],
+      containerSelectors: [
+        "[data-scope='field'][data-part='root']",
+        "[data-scope='file-upload'][data-part='root']",
+        "[role='group']"
+      ],
+      aliases: [
+        { key: "fullName", patterns: [/basicInformation\.name/i, /^이름\s*\*/] },
+        { key: "email", patterns: [/basicInformation\.email/i, /이메일주소/] },
+        { key: "phone", patterns: [/basicInformation\.phoneNumber/i, /^연락처\s*\*/] }
+      ]
+    },
+    {
       id: "saramin",
       name: "사람인",
       hosts: ["saramin.co.kr"],
@@ -51,5 +66,13 @@
     };
   }
 
-  globalThis.JobAssistantAdapters = { adapters, forHost };
+  function forPage(hostname, markers = {}) {
+    const byHost = forHost(hostname);
+    if (byHost.id !== "generic") return byHost;
+    return markers.greeting
+      ? adapters.find((adapter) => adapter.id === "greeting")
+      : byHost;
+  }
+
+  globalThis.JobAssistantAdapters = { adapters, forHost, forPage };
 })();

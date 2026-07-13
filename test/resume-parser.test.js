@@ -58,3 +58,23 @@ DataHub와 Airflow 통합
   assert.equal(result.projects.length, 1);
   assert.equal(result.projects[0].name, "Lakehouse Platform");
 });
+
+test("preserves full text and expands explicit skills and education sections", () => {
+  const result = extractResumeFields(`
+김민수
+기술 스택
+Python, Kubernetes, Argo CD, Helm
+
+학력 사항
+Example University / Computer Science 2015.03 - 2019.02
+Bachelor of Science
+  `);
+
+  assert.match(result.fields.skills, /Argo CD/);
+  assert.match(result.fields.skills, /Helm/);
+  assert.equal(result.education.length, 1);
+  assert.equal(result.education[0].school, "Example University");
+  assert.ok(result.rawText.includes("Bachelor of Science"));
+  assert.ok(result.metadata.characterCount > 30);
+  assert.ok(result.metadata.skillCount >= 4);
+});
