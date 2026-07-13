@@ -29,6 +29,69 @@ function findUrl(urls, host) {
   return urls.find((url) => url.toLowerCase().includes(host)) || "";
 }
 
+const SECTION_HEADINGS = {
+  experience: /^(경력|경력사항|주요 경력|work experience|experience|employment)$/i,
+  projects: /^(프로젝트|주요 프로젝트|projects?|project experience)$/i
+};
+
+const DATE_RANGE = /(20\d{2})[.\-/년\s]+(0?[1-9]|1[0-2])?\s*(?:~|–|—|-)\s*(?:(20\d{2})[.\-/년\s]+(0?[1-9]|1[0-2])?|현재|재직중|present)/i;
+
+function sectionsFrom(lines) {
+  const sections = { experience: [], projects: [] };
+  let current = "";
+  for (const line of lines) {
+    const heading = Object.entries(SECTION_HEADINGS).find(([, pattern]) => pattern.test(line));
+    if (heading) {
+      current = heading[0];
+      continue;
+    }
+    if (current) sections[current].push(line);
+  }
+  return sections;
+}
+
+function monthValue(year, month) {
+  return year ? `${year}-${String(month || "01").padStart(2, "0")}` : "";
+}
+
+function datedEntries(lines, kind) {
+  const entries = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const range = lines[index].match(DATE_RANGE);
+    if (!range) continue;
+    const period = range[0];
+    const beforeDate = lines[index].replace(period, "").replace(/[|·•]/g, " ").trim();
+    const previous = lines[index - 1] || "";
+    const next = lines[index + 1] || "";
+    const identity = beforeDate || previous;
+    const parts = identity.split(/\s{2,}|\s+[|/]\s+/).filter(Boolean);
+    const description = lines.slice(index + 1, index + 5).filter((line) => !DATE_RANGE.test(line)).join("\n");
+    const current = /현재|재직중|present/i.test(period);
+    if (kind === "experience") {
+      entries.push({
+        company: parts[0] || identity,
+        title: parts[1] || (next !== description ? next : ""),
+        startDate: monthValue(range[1], range[2]),
+        endDate: current ? "" : monthValue(range[3], range[4]),
+        current,
+        period,
+        description,
+        achievements: ""
+      });
+    } else {
+      entries.push({
+        name: parts[0] || identity || `프로젝트 ${entries.length + 1}`,
+        role: parts[1] || "",
+        period,
+        technologies: "",
+        description,
+        outcomes: ""
+      });
+    }
+  }
+  return entries;
+}
+
 export function extractResumeFields(rawText) {
   const text = rawText.replace(/\u0000/g, "").replace(/\r\n?/g, "\n");
   const lines = text.split("\n").map((line) => line.replace(/\s+/g, " ").trim()).filter(Boolean);
@@ -44,6 +107,7 @@ export function extractResumeFields(rawText) {
     const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp(`(^|[^A-Za-z0-9+#.])${escaped}([^A-Za-z0-9+#.]|$)`, "i").test(compactText);
   });
+  const sections = sectionsFrom(lines);
   const fields = {
     fullName: findName(lines),
     email,
@@ -57,6 +121,8 @@ export function extractResumeFields(rawText) {
   };
   return {
     fields: Object.fromEntries(Object.entries(fields).filter(([, value]) => value)),
+    experiences: datedEntries(sections.experience, "experience"),
+    projects: datedEntries(sections.projects, "projects"),
     rawText: lines.join("\n")
   };
 }

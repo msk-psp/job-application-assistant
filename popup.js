@@ -1,6 +1,16 @@
 const PROFILE_KEY = "resumeProfile";
 let currentSuggestions = [];
 
+function hasProfileData(profile) {
+  return Boolean(
+    profile?.fullName
+    || profile?.email
+    || profile?.summary
+    || profile?.experiences?.length
+    || profile?.answers?.length
+  );
+}
+
 async function activeTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab;
@@ -11,7 +21,10 @@ async function sendToPage(message) {
   try {
     return await chrome.tabs.sendMessage(tab.id, message);
   } catch (error) {
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] });
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ["matching-core.js", "platform-adapters.js", "content.js"]
+    });
     return chrome.tabs.sendMessage(tab.id, message);
   }
 }
@@ -24,14 +37,17 @@ function renderSuggestions(suggestions) {
     item.className = "suggestion";
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.checked = true;
+    checkbox.checked = suggestion.confidence !== "low";
     checkbox.dataset.index = String(index);
     const detail = document.createElement("span");
     const title = document.createElement("strong");
     title.textContent = suggestion.label;
+    const confidence = document.createElement("small");
+    confidence.className = `confidence confidence-${suggestion.confidence}`;
+    confidence.textContent = { high: "높은 신뢰도", medium: "보통 신뢰도", low: "낮은 신뢰도" }[suggestion.confidence];
     const value = document.createElement("p");
     value.textContent = suggestion.value;
-    detail.append(title, value);
+    detail.append(title, confidence, value);
     item.append(checkbox, detail);
     container.append(item);
   }
@@ -41,7 +57,7 @@ async function scanForm() {
   const status = document.getElementById("status");
   const stored = await chrome.storage.local.get(PROFILE_KEY);
   const profile = stored[PROFILE_KEY] || {};
-  if (!profile.fullName && !profile.email && !profile.summary) {
+  if (!hasProfileData(profile)) {
     document.getElementById("profile-warning").hidden = false;
     status.textContent = "Resume profile is empty.";
     return;
@@ -75,5 +91,5 @@ sendToPage({ type: "PAGE_INFO" })
   .catch(() => { document.getElementById("site-label").textContent = "Unsupported browser page"; });
 
 chrome.storage.local.get(PROFILE_KEY).then((stored) => {
-  document.getElementById("profile-warning").hidden = Boolean(stored[PROFILE_KEY]);
+  document.getElementById("profile-warning").hidden = hasProfileData(stored[PROFILE_KEY]);
 });

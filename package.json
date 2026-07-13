@@ -1,9 +1,10 @@
 {
   "name": "job-application-assistant",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
+    "check": "node --check content.js && node --check options.js && node --check popup.js && node --test",
     "test": "node --test"
   },
   "engines": {

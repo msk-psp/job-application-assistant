@@ -36,3 +36,25 @@ https://github.com/janekim
   assert.equal(result.fields.fullName, "Jane Kim");
   assert.equal(result.fields.portfolio, undefined);
 });
+
+test("extracts dated experience and project candidates from sections", () => {
+  const result = extractResumeFields(`
+김민수
+경력
+Example Corp / MLOps Engineer 2021.03 - 현재
+MLflow와 Kubernetes 기반 플랫폼 운영
+배포 시간을 50% 단축
+
+프로젝트
+Lakehouse Platform / Tech Lead 2023.01 - 2024.06
+DataHub와 Airflow 통합
+  `);
+
+  assert.equal(result.experiences.length, 1);
+  assert.equal(result.experiences[0].company, "Example Corp");
+  assert.equal(result.experiences[0].title, "MLOps Engineer");
+  assert.equal(result.experiences[0].startDate, "2021-03");
+  assert.equal(result.experiences[0].current, true);
+  assert.equal(result.projects.length, 1);
+  assert.equal(result.projects[0].name, "Lakehouse Platform");
+});
