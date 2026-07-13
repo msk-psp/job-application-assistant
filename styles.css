@@ -26,6 +26,13 @@ h2 { margin-bottom: 16px; font-size: 16px; }
 h3 { margin: 0 0 4px; font-size: 14px; }
 .popup-header p, .page-header p { margin-bottom: 0; color: #66717a; font-size: 13px; }
 .popup main { padding: 16px 20px 20px; }
+.onboarding { padding: 4px 0 10px; }
+.onboarding p { color: #66717a; font-size: 13px; line-height: 1.5; }
+.full-button { width: 100%; margin-top: 4px; }
+.ready-toolbar { position: sticky; top: 0; z-index: 1; padding-bottom: 10px; background: #fff; }
+.ready-toolbar .primary { flex: 1; }
+.popup-footer { display: flex; justify-content: space-between; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #dfe3e6; }
+.popup-footer button { flex: 1; padding: 0 8px; font-size: 12px; }
 .icon-button {
   width: 34px;
   height: 34px;
@@ -69,8 +76,12 @@ button.primary { border-color: #176b4d; color: #fff; background: #176b4d; }
 .confidence-low { color: #a23a3a; }
 
 .options { min-height: 100vh; background: #f6f7f8; }
+.test-page { min-height: 100vh; background: #f6f7f8; }
 .page-header { display: block; background: #fff; }
 .profile-form { width: min(860px, calc(100% - 32px)); margin: 24px auto 80px; }
+.test-form { width: min(760px, calc(100% - 32px)); margin: 24px auto 60px; }
+.test-form section { padding: 22px 0; border-bottom: 1px solid #d8dde1; }
+.test-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 20px; color: #66717a; font-size: 13px; }
 .profile-form section { padding: 22px 0; border-bottom: 1px solid #d8dde1; }
 .section-description { color: #66717a; font-size: 13px; }
 .import-controls { display: flex; align-items: end; gap: 10px; }

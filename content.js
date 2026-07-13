@@ -1,6 +1,13 @@
 (() => {
   const core = globalThis.JobAssistantCore;
-  const adapter = globalThis.JobAssistantAdapters.forHost(location.hostname);
+  const adapter = location.protocol === "chrome-extension:" && location.pathname.endsWith("/test-form.html")
+    ? {
+        id: "test",
+        name: "안전한 테스트 폼",
+        containerSelectors: ["fieldset", "section", ".field-grid"],
+        aliases: []
+      }
+    : globalThis.JobAssistantAdapters.forHost(location.hostname);
 
   function fieldText(element) {
     const labels = element.labels ? Array.from(element.labels).map((label) => label.innerText) : [];

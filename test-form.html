@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>입사 지원서 테스트 폼</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="test-page">
+    <header class="page-header">
+      <h1>안전한 테스트 지원서</h1>
+      <p>입력 결과를 확인하기 위한 로컬 페이지입니다. 어떤 정보도 제출하거나 전송하지 않습니다.</p>
+    </header>
+
+    <main class="test-form">
+      <section>
+        <h2>기본 정보</h2>
+        <div class="field-grid">
+          <label>이름<input name="applicantName" autocomplete="name"></label>
+          <label>이메일<input name="email" type="email" autocomplete="email"></label>
+          <label>연락처<input name="phone" autocomplete="tel"></label>
+          <label>거주지<input name="location" autocomplete="address-level1"></label>
+          <label>GitHub URL<input name="github" type="url"></label>
+          <label>LinkedIn URL<input name="linkedin" type="url"></label>
+        </div>
+      </section>
+
+      <section>
+        <h2>경력 정보</h2>
+        <div class="field-grid">
+          <label>현재 회사<input name="currentCompany"></label>
+          <label>현재 직책<input name="currentTitle"></label>
+          <label>총 경력 연수<input name="yearsExperience" type="number" step="0.1"></label>
+          <label>기술 스택<input name="skills"></label>
+        </div>
+        <label>경력 요약<textarea name="careerSummary" rows="6"></textarea></label>
+      </section>
+
+      <section>
+        <h2>조직 문화 질문</h2>
+        <label>선호하는 조직 문화와 업무 환경을 작성해 주세요
+          <textarea name="cultureQuestion" rows="6"></textarea>
+        </label>
+      </section>
+
+      <div class="test-actions">
+        <button id="clear-form" type="button">입력 내용 지우기</button>
+        <span>제출 버튼이 없는 테스트 전용 폼입니다.</span>
+      </div>
+    </main>
+
+    <script src="matching-core.js"></script>
+    <script src="platform-adapters.js"></script>
+    <script src="content.js"></script>
+    <script src="test-form.js"></script>
+  </body>
+</html>

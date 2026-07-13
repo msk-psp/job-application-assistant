@@ -1,9 +1,6 @@
-import * as pdfjsLib from "./vendor/pdfjs/build/pdf.mjs";
-import { extractResumeFields } from "./resume-parser.js";
+import { extractPdfResume, validatePdfFile } from "./pdf-import.js";
 
 const PROFILE_KEY = "resumeProfile";
-const MAX_PDF_SIZE = 15 * 1024 * 1024;
-const MAX_PDF_PAGES = 50;
 const fields = [
   "fullName", "email", "phone", "location", "linkedin", "portfolio", "github",
   "currentCompany", "currentTitle", "yearsExperience", "expectedSalary",
@@ -22,8 +19,6 @@ const legacyAnswers = {
   collaboration: "협업 방식 또는 갈등 해결"
 };
 let pendingImport = null;
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL("vendor/pdfjs/build/pdf.worker.mjs");
 
 function createInput(labelText, field, value = "", options = {}) {
   const label = document.createElement("label");
@@ -168,37 +163,6 @@ async function saveProfile() {
   window.setTimeout(() => { status.textContent = ""; }, 1800);
 }
 
-async function extractPdfText(file) {
-  const data = new Uint8Array(await file.arrayBuffer());
-  const loadingTask = pdfjsLib.getDocument({
-    data,
-    cMapUrl: chrome.runtime.getURL("vendor/pdfjs/web/cmaps/"),
-    cMapPacked: true,
-    isEvalSupported: false,
-    standardFontDataUrl: chrome.runtime.getURL("vendor/pdfjs/web/standard_fonts/")
-  });
-  const pdf = await loadingTask.promise;
-  const pages = [];
-  try {
-    if (pdf.numPages > MAX_PDF_PAGES) throw new Error(`PDF는 ${MAX_PDF_PAGES}페이지 이하여야 합니다.`);
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-      const page = await pdf.getPage(pageNumber);
-      const content = await page.getTextContent();
-      let pageText = "";
-      for (const item of content.items) {
-        if (!("str" in item)) continue;
-        pageText += item.str;
-        pageText += item.hasEOL ? "\n" : " ";
-      }
-      pages.push(pageText.replace(/[ \t]+\n/g, "\n").trim());
-      page.cleanup();
-    }
-  } finally {
-    await pdf.destroy();
-  }
-  return pages.filter(Boolean).join("\n\n");
-}
-
 function importRow(labelText, value, attributes = {}) {
   const row = document.createElement("label");
   row.className = "import-field";
@@ -245,15 +209,16 @@ async function importResume() {
   const extractButton = document.getElementById("extract-resume");
   const file = input.files?.[0];
   document.getElementById("import-preview").hidden = true;
-  if (!file) return void (status.textContent = "PDF 파일을 선택하세요.");
-  if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) return void (status.textContent = "PDF 파일만 가져올 수 있습니다.");
-  if (file.size > MAX_PDF_SIZE) return void (status.textContent = "PDF 크기는 15MB 이하여야 합니다.");
+  try {
+    validatePdfFile(file);
+  } catch (error) {
+    status.textContent = error.message;
+    return;
+  }
   status.textContent = "PDF에서 텍스트를 추출하고 있습니다...";
   extractButton.disabled = true;
   try {
-    const text = await extractPdfText(file);
-    if (text.replace(/\s/g, "").length < 30) throw new Error("텍스트를 찾지 못했습니다. 이미지로 스캔된 PDF는 아직 지원하지 않습니다.");
-    const result = extractResumeFields(text);
+    const result = await extractPdfResume(file);
     renderImportPreview(result);
     const count = Object.keys(result.fields).length + result.experiences.length + result.projects.length;
     status.textContent = `${file.name}에서 ${count}개 항목을 찾았습니다.`;
